@@ -1,0 +1,83 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 12/16/2025 11:57:15 AM
+// Design Name: 
+// Module Name: 
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+module alu_add_sub_bram (
+    input  wire        i_clk,
+    input  wire        i_rst_n,
+    input  wire        start,
+    input  wire [7:0]  a,
+    input  wire [7:0]  b,
+    input  wire        op_sel,
+    output wire [15:0] result,
+    output wire        done
+);
+
+    reg [1:0] state, state_next;
+    reg [15:0] reg_result, reg_result_next;
+    reg reg_done, reg_done_next;
+
+    localparam IDLE      = 1'b0,
+               EXEC      = 1'b1;
+
+    // ======================
+    // Sequential logic
+    // ======================
+    always @(posedge i_clk) begin
+        if (!i_rst_n) begin
+            state         <= IDLE;
+            reg_result    <= 0;
+            reg_done      <= 0;
+        end else begin
+            state         <= state_next;
+            reg_result    <= reg_result_next;
+            reg_done      <= reg_done_next;
+        end
+    end
+
+    // ======================
+    // Combinational logic
+    // ======================
+    always @(*) begin
+        state_next          = state;
+        reg_result_next     = reg_result;
+        reg_done_next       = 1'b0;
+
+        case (state)
+            IDLE: begin
+                if (start) begin
+                    state_next  = EXEC;
+                end
+                else begin
+                    state_next  = state;
+                end
+            end
+            EXEC: begin
+                reg_result_next = (op_sel == 0) ? (a + b) : (a - b);
+                reg_done_next   = 1'b1;
+                state_next      = IDLE;
+            end
+            default: state_next = IDLE;
+        endcase
+    end
+
+    assign result    = reg_result;
+    assign done      = reg_done;
+
+endmodule
