@@ -22,19 +22,16 @@
 module alu_wrapper (
     input  wire        i_clk,
     input  wire        i_rst_n,
-
     // Control inputs
     input  wire        start,
     input  wire        op_sel,
     input  wire [7:0]  a_data,
     input  wire [7:0]  b_data,
-
     // Status / display outputs
     output wire        done,
     output wire [6:0]  seg,
     output wire [3:0]  an
 );
-
     // ALU result
     wire [15:0] alu_result;
     
@@ -51,15 +48,15 @@ module alu_wrapper (
         .result    (alu_result),
         .done      (done)
     );
-
+    
     // ======================
     // Seven segment display
     // ======================
     seven_seg_hex u_seven_seg (
-        .i_clk   (i_clk),
-        .value (alu_result),
-        .seg   (seg),
-        .an    (an)
+        .i_clk     (i_clk),
+        .i_rst_n   (i_rst_n), 
+        .value     (alu_result),
+        .seg       (seg),
+        .an        (an)
     );
-
 endmodule
