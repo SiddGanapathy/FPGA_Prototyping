@@ -1,5 +1,23 @@
 `timescale 1ns / 1ps
-
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: Siddanth Ganpathy & Gagan M
+// 
+// Create Date: 12/16/2025 11:57:15 AM
+// Design Name: TB_alu_wrapper
+// Module Name: tb_alu_wrapper
+// Project Name: UART_Test
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision: 01/02/2026
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 module tb_alu_wrapper;
 
     // Clock and reset

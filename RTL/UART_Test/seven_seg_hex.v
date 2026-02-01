@@ -1,19 +1,19 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
-// Engineer: 
+// Engineer: Siddanth Ganpathy & Gagan M
 // 
-// Create Date: 23.01.2026 16:30:03
-// Design Name: 
+// Create Date: 12/16/2025 11:57:15 AM
+// Design Name: Seven_seg
 // Module Name: seven_seg_hex
-// Project Name: 
+// Project Name: UART_Test
 // Target Devices: 
 // Tool Versions: 
 // Description: 
 // 
 // Dependencies: 
 // 
-// Revision:
+// Revision: 01/02/2026
 // Revision 0.01 - File Created
 // Additional Comments:
 // 

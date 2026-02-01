@@ -1,29 +1,31 @@
 `timescale 1ns / 1ps
+
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
-// Engineer: 
+// Engineer: Tanish Shet
 // 
 // Create Date: 12/16/2025 11:57:15 AM
-// Design Name: 
-// Module Name: uart_rx_only
-// Project Name: 
+// Design Name: Uart_rx_fifo_wrapper
+// Module Name: uart_rx_fifo_wrapper
+// Project Name: UART_Test
 // Target Devices: 
 // Tool Versions: 
 // Description: 
 // 
 // Dependencies: 
 // 
-// Revision:
+// Revision: 01/02/2026
 // Revision 0.01 - File Created
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
+
 module uart_rx_fifo_wrapper #(
   parameter DataLength      = 8,
   parameter BaudRate        = 115200,
   parameter FifoDepth       = 8,
   parameter SystemClockFreq = 50_000_000,
-  parameter FlowControl     = 1'b1
+  parameter FlowControl     = 1'b0
 )(
   /* Main Signals */
   input  logic        i_rst_n,

@@ -1,19 +1,19 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
-// Engineer: 
+// Engineer: Siddanth Ganapathy & Gagan M
 // 
 // Create Date: 12/16/2025 11:57:15 AM
-// Design Name: 
-// Module Name: 
-// Project Name: 
+// Design Name: Uart_alu_top
+// Module Name: uart_alu_top
+// Project Name: UART_Test
 // Target Devices: 
 // Tool Versions: 
 // Description: 
 // 
 // Dependencies: 
 // 
-// Revision:
+// Revision: 01/02/2026
 // Revision 0.01 - File Created
 // Additional Comments:
 // 
@@ -37,16 +37,17 @@ module uart_alu_top (
     wire [7:0]  rx_data;
     wire        fifo_empty;
     wire        fifo_full;
-    reg         rx_req_r, rx_req_n;
+    reg         rx_req_r, rx_req_nxt;
     wire        rx_error;
+
     // ============================================================
     // ALU control signals
     // ============================================================
-    reg         alu_start_r,  alu_start_n;
-    reg         alu_op_sel_r, alu_op_sel_n;
-    reg  [7:0]  a_data,a_data_n;
-    reg  [7:0]  b_data,b_data_n;
-    reg  [7:0]  data_in,data_in_n;
+    reg         alu_start_r,  alu_start_nxt;
+    reg         alu_op_sel_r, alu_op_sel_nxt;
+    reg  [7:0]  a_data,a_data_nxt;
+    reg  [7:0]  b_data,b_data_nxt;
+    reg  [7:0]  data_in,data_in_nxt;
     wire [7:0]  a,b;
     wire        alu_done;   
     wire        rx_req;
@@ -54,31 +55,40 @@ module uart_alu_top (
     wire        alu_op_sel;
 
     // ============================================================
+    // State CONTROL signals
+    // ============================================================
+    reg         wrt_busy, wrt_busy_nxt;
+    reg         rd_busy, rd_busy_nxt;
+    
+    // ============================================================
     // BRAM CONTROL signals
     // ============================================================
-    reg  [2:0]  count,count_n;
+    reg  [2:0]  count,count_nxt;
     wire [2:0]  bram_addr;
-    reg  [2:0]  bram_addr_wrt,bram_addr_wrt_n;
-    reg  [2:0]  bram_addr_rd,bram_addr_rd_n;
-    reg         bram_we_wrt,bram_we_wrt_n;    
+    reg  [2:0]  bram_addr_wrt,bram_addr_wrt_nxt;
+    reg  [2:0]  bram_addr_rd,bram_addr_rd_nxt;
+    reg         bram_we_wrt,bram_we_wrt_nxt;    
     wire [7:0]  bram_dout;    
     wire        wstrb;
     // ============================================================
     // FSM states
     // ============================================================
-    localparam [2:0]
+    localparam [1:0]
         IDLE_Wrt            = 3'h00,
-        Write_Data          = 3'h01,
-        Write_DONE          = 3'h02;
-        
+        WAIT_BYTE           = 3'h01,
+        Write_Data          = 3'h02,
+        Write_DONE          = 3'h03;
+    
     reg [2:0] state_wrt, state_wrt_nxt;
     
     localparam [7:0]
         IDLE_Rd             = 8'h00,
         READ_OP             = 8'h01,
-        READ_ADDR_A         = 8'h02,
-        READ_ADDR_B         = 8'h03,
-        WAIT_Rd_DONE        = 8'h04;
+        WAIT_A              = 8'h02,
+        READ_ADDR_A         = 8'h03,
+        WAIT_B              = 8'h04,
+        READ_ADDR_B         = 8'h05,
+        WAIT_Rd_DONE        = 8'h06;
 
     reg [7:0] state_rd, state_rd_nxt;
 
@@ -100,6 +110,8 @@ module uart_alu_top (
         if (!i_rst_n) begin
             state_wrt       <= IDLE_Wrt;
             state_rd        <= IDLE_Rd;
+            wrt_busy        <= 1'b0;
+            rd_busy         <= 1'b0;            
             data_in         <= 8'd0;
             count           <= 3'd0;
             rx_req_r        <= 1'b0;
@@ -112,17 +124,20 @@ module uart_alu_top (
             b_data          <= 3'd0;           
         end else begin
             state_wrt       <= state_wrt_nxt;
-            state_rd        <= state_rd_nxt;  
-            data_in         <= data_in_n;
-            count           <= count_n;
-            rx_req_r        <= rx_req_n;
-            alu_start_r     <= alu_start_n;
-            alu_op_sel_r    <= alu_op_sel_n;
-            bram_addr_wrt   <= bram_addr_wrt_n;
-            bram_we_wrt     <= bram_we_wrt_n;
-            bram_addr_rd    <= bram_addr_rd_n;
-            a_data          <= a_data_n;
-            b_data          <= b_data_n;
+            state_rd        <= state_rd_nxt; 
+            wrt_busy        <= wrt_busy_nxt;
+            rd_busy         <= rd_busy_nxt;
+            data_in         <= data_in_nxt; 
+            count           <= count_nxt;
+            rx_req_r        <= rx_req_nxt;
+            alu_start_r     <= alu_start_nxt;
+            alu_op_sel_r    <= alu_op_sel_nxt;
+            bram_addr_wrt   <= bram_addr_wrt_nxt;
+            bram_we_wrt     <= bram_we_wrt_nxt;
+            bram_addr_rd    <= bram_addr_rd_nxt;
+            a_data          <= a_data_nxt;
+            b_data          <= b_data_nxt;
+       
         end
     end
 
@@ -131,88 +146,116 @@ module uart_alu_top (
     // ============================================================
     always @(*) begin
         // defaults (hold state)
-        state_wrt_nxt   = state_wrt;
-        state_rd_nxt    = state_rd;
-        rx_req_n        = 1'b0;
-        alu_start_n     = 1'b0;
-        data_in_n       = data_in;
-        count_n         = count;
-        bram_addr_wrt_n = bram_addr_wrt;
-        bram_we_wrt_n   = 1'b0;
-        bram_addr_rd_n  = bram_addr_rd;
-        alu_op_sel_n    = alu_op_sel_r;
-        a_data_n        = a_data;
-        b_data_n        = b_data;
+        state_wrt_nxt     = state_wrt;
+        state_rd_nxt      = state_rd;
+        wrt_busy_nxt      = wrt_busy;
+        rd_busy_nxt       = rd_busy;
+        rx_req_nxt        = 1'b0;
+        alu_start_nxt     = 1'b0;
+        data_in_nxt       = data_in;
+        count_nxt         = count;
+        bram_addr_wrt_nxt = bram_addr_wrt;
+        bram_we_wrt_nxt   = 1'b0;
+        bram_addr_rd_nxt  = bram_addr_rd;
+        alu_op_sel_nxt    = alu_op_sel_r;
+        a_data_nxt        = a_data;
+        b_data_nxt        = b_data;
         
 /////////////---------- Write BRAM FSM-------------////////////////
-        case (state_wrt)
-            // ------------------------------------------------
-            IDLE_Wrt: begin
-                if (fifo_full) begin
-                    rx_req_n        = 1'b0;
-                    state_wrt_nxt   = Write_Data;
-                end
-                else begin
-                    rx_req_n        = 1'b1;
-                    state_wrt_nxt   = state_wrt; 
-                end
+    case (state_wrt)
+    
+        IDLE_Wrt: begin
+            if (fifo_full && !rd_busy) begin
+                wrt_busy      = 1'b1;
+                count_nxt     = 3'd0;
+                rx_req_nxt    = 1'b1;    
+                state_wrt_nxt = WAIT_BYTE; 
+            end
+            else begin
+                wrt_busy_nxt  = wrt_busy;
+                count_nxt     = count;
+                rx_req_nxt    = rx_req_r;    
+                state_wrt_nxt = state_wrt; 
             end            
-            Write_Data: begin
-                if(count == 3'd7) begin
-                    rx_req_n        = 1'b0;                    
-                    count_n         = 3'd0;
-                    bram_addr_wrt_n = 3'd0;
-                    bram_we_wrt_n   = 1'd0;
-                    data_in_n       = data_in;
-                    state_wrt_nxt   = Write_DONE;                
-                end
-                else begin
-                    rx_req_n        = rx_req_r;                   
-                    bram_addr_wrt_n = count;
-                    bram_we_wrt_n   = 1'd1;
-                    count_n         = count + 1;
-                    data_in_n       = rx_data;
-                    state_wrt_nxt   = state_wrt;
-                end
+        end    
+        WAIT_BYTE: begin
+            data_in_nxt   = rx_data;
+            state_wrt_nxt = Write_Data;
+        end
+        Write_Data: begin
+            bram_we_wrt_nxt   = 1'b1;
+            bram_addr_wrt_nxt = count;
+           // data_in_nxt       = data_in;  
+            if (count == 3'd7) begin
+                count_nxt     = 3'd0;
+                state_wrt_nxt = Write_DONE;
             end
-            Write_DONE: begin 
-                    state_wrt_nxt   = IDLE_Wrt;
+            else begin
+                count_nxt     = count + 1'b1;
+                rx_req_nxt    = 1'b1;      
+                state_wrt_nxt = WAIT_BYTE; 
             end
-            default: state_wrt_nxt  = IDLE_Wrt;            
-        endcase
+        end
+        Write_DONE: begin
+            wrt_busy_nxt  = 1'b0;
+            rd_busy_nxt   = 1'b1;        
+            state_wrt_nxt = IDLE_Wrt;
+        end
 
-/////////////---------- Read BRAM FSM-------------////////////////
+        // =====================================================
+        default: begin
+            state_wrt_nxt = IDLE_Wrt;
+        end
+
+    endcase
         
+/////////////---------- Read BRAM FSM-------------////////////////
+      
         case (state_rd)
             // ------------------------------------------------
             IDLE_Rd: begin
+                if(rd_busy && !wrt_busy) begin
                     state_rd_nxt    = READ_OP;
+                end
+                else begin
+                    state_rd_nxt    = state_rd;
+                end
             end             
             READ_OP: begin
-                    alu_op_sel_n    = op_sel_sw;
-                    bram_addr_rd_n  = bram_addr_rd;                    
-                    state_rd_nxt    = READ_ADDR_A;
+                    alu_op_sel_nxt    = op_sel_sw;
+                    bram_addr_rd_nxt  = bram_addr_rd;                    
+                    state_rd_nxt      = WAIT_A;
+            end
+            WAIT_A: begin
+                    state_rd_nxt     = READ_ADDR_A;
             end
             READ_ADDR_A: begin
-                    a_data_n        = bram_dout;     
-                    bram_addr_rd_n  = bram_addr_rd + 3'd4;                                   
-                    state_rd_nxt    = READ_ADDR_B;
+                    a_data_nxt        = bram_dout;     
+                    bram_addr_rd_nxt  = bram_addr_rd +3'd1;                                   
+                    state_rd_nxt      = WAIT_B;
             end
+            WAIT_B: begin
+                    state_rd_nxt     = READ_ADDR_B;
+            end            
             READ_ADDR_B: begin
-                    b_data_n        = bram_dout;
-                    alu_start_n     = 1'b1;                    
-                    state_rd_nxt    = WAIT_Rd_DONE;              
+                    b_data_nxt        = bram_dout;
+                    bram_addr_rd_nxt  = bram_addr_rd +3'd1;                    
+                    alu_start_nxt     = 1'b1;                    
+                    state_rd_nxt      = WAIT_Rd_DONE;              
             end
             WAIT_Rd_DONE: begin
-                    bram_addr_rd_n  = bram_addr_rd + 3'd4;                                
+                    rd_busy_nxt       = 1'b0;                                
                 if (alu_done)begin
+                    rd_busy_nxt     = 1'b1;
                     state_rd_nxt    = READ_OP;
                 end
                 else begin                   
                     state_rd_nxt    = state_rd;                                
                 end
             end
-            default: state_rd_nxt   = IDLE_Rd;
+            default: begin
+                state_rd_nxt   = IDLE_Rd;
+            end
         endcase
     end
 

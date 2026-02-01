@@ -1,5 +1,24 @@
 // FIFO Controller module
 `timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: Tanish Shet
+// 
+// Create Date: 12/16/2025 11:57:15 AM
+// Design Name: Fifo_ctrl
+// Module Name: fifo_ctrl
+// Project Name: UART_Test
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision: 01/02/2026
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 module fifo_ctrl #(
   parameter  DataWidth      = 8,
   parameter  Depth          = 8,
