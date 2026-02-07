@@ -24,7 +24,7 @@ module uart_rx_fifo_wrapper #(
   parameter DataLength      = 8,
   parameter BaudRate        = 115200,
   parameter FifoDepth       = 8,
-  parameter SystemClockFreq = 50_000_000,
+  parameter SystemClockFreq = 100_000_000,
   parameter FlowControl     = 1'b0
 )(
   /* Main Signals */
@@ -50,7 +50,7 @@ module uart_rx_fifo_wrapper #(
   
   assign o_rts          = FlowControl ? ~rx_fifo_almost_full : 1'bz;
   assign o_fifo_full    = rx_fifo_full;
-  /* ----- RX Synchronizer ----- */
+   /* ----- RX Synchronizer ----- */
   logic i_rx_sync_1, i_rx_sync_2;
   always_ff @(posedge i_clk or negedge i_rst_n) begin
     if (!i_rst_n) begin

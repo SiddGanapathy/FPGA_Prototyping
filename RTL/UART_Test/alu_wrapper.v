@@ -29,11 +29,12 @@ module alu_wrapper (
     input  wire [7:0]  b_data,
     // Status / display outputs
     output wire        done,
+    output wire [15:0] alu_result,
     output wire [6:0]  seg,
     output wire [3:0]  an
 );
     // ALU result
-    wire [15:0] alu_result;
+    //wire [15:0] alu_result;
     
     // ======================
     // ALU

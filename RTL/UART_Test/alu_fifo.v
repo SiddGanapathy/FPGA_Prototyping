@@ -13,7 +13,7 @@
 // 
 // Dependencies: 
 // 
-// Revision: 01/02/2026
+// Revision: 07/02/2026
 // Revision 0.01 - File Created
 // Additional Comments:
 // 
@@ -32,6 +32,7 @@ module alu_add_sub_bram (
     reg [1:0] state, state_next;
     reg [15:0] reg_result, reg_result_next;
     reg reg_done, reg_done_next;
+    reg [25:0] count,count_nxt;
 
     localparam IDLE      = 1'b0,
                EXEC      = 1'b1;
@@ -44,10 +45,12 @@ module alu_add_sub_bram (
             state         <= IDLE;
             reg_result    <= 0;
             reg_done      <= 0;
+            count         <= 0;
         end else begin
             state         <= state_next;
             reg_result    <= reg_result_next;
             reg_done      <= reg_done_next;
+            count         <= count_nxt;
         end
     end
 
@@ -58,6 +61,7 @@ module alu_add_sub_bram (
         state_next          = state;
         reg_result_next     = reg_result;
         reg_done_next       = 1'b0;
+        count_nxt           = count;
 
         case (state)
             IDLE: begin
@@ -69,10 +73,21 @@ module alu_add_sub_bram (
                 end
             end
             EXEC: begin
-                reg_result_next = (op_sel == 0) ? (a + b) : (a - b);
-                reg_done_next   = 1'b1;
-                state_next      = IDLE;
+            
+                if (count == 26'd50_000_000) begin   // visible delay (~1s @50MHz)
+                    reg_result_next = (op_sel == 0) ? (a + b) : (a - b);
+                    reg_done_next   = 1'b1;
+                    count_nxt       = 0;
+                    state_next      = IDLE;
+                end 
+                else begin
+                    count_nxt       = count + 1'b1;
+                    reg_done_next   = 1'b0;
+                    state_next      = EXEC;
+                end
+            
             end
+            
             default: state_next = IDLE;
         endcase
     end

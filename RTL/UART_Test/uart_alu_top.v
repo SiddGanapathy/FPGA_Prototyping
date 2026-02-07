@@ -13,7 +13,7 @@
 // 
 // Dependencies: 
 // 
-// Revision: 01/02/2026
+// Revision: 07/02/2026
 // Revision 0.01 - File Created
 // Additional Comments:
 // 
@@ -26,6 +26,7 @@ module uart_alu_top (
     /* UART RX pin */
     input  wire        uart_rx,
     input  wire        op_sel_sw,
+    output wire        check_data,
     /* Seven segment output */
     output wire [6:0]  seg,
     output wire [3:0]  an
@@ -53,7 +54,7 @@ module uart_alu_top (
     wire        rx_req;
     wire        alu_start;
     wire        alu_op_sel;
-
+    wire [15:0] result;
     // ============================================================
     // State CONTROL signals
     // ============================================================
@@ -102,7 +103,8 @@ module uart_alu_top (
     assign alu_op_sel = alu_op_sel_r;
     assign a          = a_data;
     assign b          = b_data;
-
+    assign check_data = fifo_empty;
+    
     // ============================================================
     //  Sequential block
     // ============================================================
@@ -166,7 +168,7 @@ module uart_alu_top (
     
         IDLE_Wrt: begin
             if (fifo_full && !rd_busy) begin
-                wrt_busy      = 1'b1;
+                wrt_busy_nxt  = 1'b1;
                 count_nxt     = 3'd0;
                 rx_req_nxt    = 1'b1;    
                 state_wrt_nxt = WAIT_BYTE; 
@@ -297,9 +299,25 @@ module uart_alu_top (
         .a_data     (a),
         .b_data     (b),
         .done       (alu_done),
+        .alu_result (result),
         .seg        (seg),
         .an         (an)
 
     );
 
+    // ============================================================
+    // ILA Probe
+    // ============================================================
+    ila_0 u_ila (
+        .clk    (i_clk), 
+    
+        .probe0 (rx_data),
+        .probe1 (fifo_full),
+        .probe2 (data_in),
+        .probe3 (bram_dout),
+        .probe4 (a_data),
+        .probe5 (b_data),
+        .probe6 (result)
+    );
+    
 endmodule

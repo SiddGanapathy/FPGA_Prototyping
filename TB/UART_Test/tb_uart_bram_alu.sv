@@ -23,7 +23,7 @@ module tb_uart_bram_alu;
   // ============================================================
   // Parameters
   // ============================================================
-  localparam CLK_FREQ     = 50_000_000;
+  localparam CLK_FREQ     = 100_000_000;
   localparam BAUD         = 115200;
   localparam CLKS_PER_BIT = CLK_FREQ / BAUD;   // 434 clocks
 

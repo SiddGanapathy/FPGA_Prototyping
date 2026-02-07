@@ -23,7 +23,7 @@
 
 module uart_rx #(
   parameter  DataLength      = 8,
-  parameter  SystemClockFreq = 50_000_000,
+  parameter  SystemClockFreq = 100_000_000,
   parameter  BaudRate        = 115200,
   parameter  Parity          = 1'b0, // 1 if enabled, 0 if not
   parameter  ParityEven      = 1'b0  // 1 if even, 0 if odd
